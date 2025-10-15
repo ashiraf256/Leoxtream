@@ -7,23 +7,63 @@
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<header class="site-header">
-  <div class="header-left">
-    <div class="logo"><span class="logo-mark">LX</span><span class="logo-text">LeoXtream</span></div>
-  </div>
-  <div class="header-right">
-    <a href="./" class="back-link">Home</a>
+<header class="header" style="position:sticky;top:0;z-index:30">
+  <div style="display:flex;align-items:center;gap:12px;padding:12px 18px;background:rgba(6,6,8,0.6)">
+    <div class="logo-mark">LX</div>
+    <div class="logo-text">LeoXtream</div>
+    <a href="./" style="margin-left:18px;color:var(--muted);text-decoration:none">Home</a>
   </div>
 </header>
 
 <main id="pageMain" style="padding:18px"></main>
 
-<script src="script.js"></script>
 <script>
-  window.LEO_CONFIG = {
-    MOVIES_JSON_RAW: "https://raw.githubusercontent.com/ashiraf256/Admin-Pannel/main/movies.json"
-  };
-  initLeoMoviePage();
+const MOVIES_JSON_RAW = 'https://raw.githubusercontent.com/ashiraf256/Admin-Pannel/main/movies.json';
+function esc(s){ return String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+function escAttr(s){ return esc(s).replaceAll('"','&quot;'); }
+
+async function load(){
+  try{
+    const r = await fetch(MOVIES_JSON_RAW + '?_=' + Date.now());
+    if(!r.ok) throw new Error('Failed');
+    const j = await r.json();
+    const movies = Array.isArray(j) ? j : (j && Array.isArray(j.movies) ? j.movies : []);
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    const m = movies.find(x => String(x.id) === String(id));
+    if(!m){ document.getElementById('pageMain').innerHTML = '<div style="color:#f66">Movie not found</div>'; return; }
+    // render
+    const related = movies.filter(x=>x.category === m.category && x.id != m.id).slice(0,8);
+    document.getElementById('pageMain').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start">
+        <div>
+          <div style="background:#000;padding:8px;border-radius:8px"><iframe src="${escAttr(m.video)}" allowfullscreen="allowfullscreen" style="width:100%;height:420px;border:0"></iframe></div>
+          <div style="margin-top:12px">
+            <h1 style="margin:0">${esc(m.title)}</h1>
+            <p style="color:var(--muted)">${esc(m.overview||'')}</p>
+            <p><b>Cast:</b> ${esc(m.cast||'')}</p>
+            ${m.download ? `<a class="pill" href="${escAttr(m.download)}" target="_blank">Download</a>` : ''}
+          </div>
+        </div>
+        <aside style="background:var(--panel);padding:12px;border-radius:8px">
+          <img src="${escAttr(m.poster||'')}" style="width:100%;border-radius:6px" />
+          <div style="margin-top:10px;color:var(--muted)">${esc(m.category||'')}</div>
+        </aside>
+      </div>
+
+      <div style="margin-top:18px">
+        <h3 style="color:var(--accent)">You may also like</h3>
+        <div style="display:flex;gap:12px;overflow-x:auto;padding:8px 0">
+          ${related.map(r=>`<div class="card" onclick="location='movie.html?id=${encodeURIComponent(r.id)}'"><img class="poster" src="${escAttr(r.poster||'')}" /><div class="card-body"><div class="title">${esc(r.title)}</div></div></div>`).join('')}
+        </div>
+      </div>
+    `;
+  }catch(e){
+    document.getElementById('pageMain').innerHTML = '<div style="color:#f66">Failed to load</div>';
+    console.error(e);
+  }
+}
+load();
 </script>
 </body>
 </html>
