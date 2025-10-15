@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>LeoXtream — Home</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <div class="header-left">
+    <div class="logo"><span class="logo-mark">LX</span><span class="logo-text">LeoXtream</span></div>
+  </div>
+  <div class="header-right">
+    <input id="searchInput" placeholder="Search movies, categories..." />
+  </div>
+</header>
+
+<main id="main">
+  <section id="heroWrap"></section>
+  <div id="sections"></div>
+</main>
+
+<div id="overlay" class="overlay" aria-hidden="true">
+  <button id="closeOverlay" class="close-btn">✕</button>
+  <div id="detail" class="detail"></div>
+</div>
+
+<script src="script.js"></script>
+<script>
+  // configure where to load movies.json (raw GitHub URL of your admin repo)
+  window.LEO_CONFIG = {
+    MOVIES_JSON_RAW: "https://raw.githubusercontent.com/ashiraf256/Admin-Pannel/main/movies.json"
+  };
+  // initialize site
+  initLeoHome();
+</script>
+</body>
+</html>
