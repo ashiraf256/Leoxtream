@@ -4,36 +4,323 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>LeoXtream — Home</title>
-<link rel="stylesheet" href="style.css" />
+<style>
+:root{--bg:#050507;--panel:#0f1115;--muted:#9aa0a6;--accent:#e50914}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,#020204,#071018);color:#fff}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:rgba(6,6,8,0.6);backdrop-filter:blur(6px);position:sticky;top:0;z-index:60;border-bottom:1px solid rgba(255,255,255,0.03)}
+.brand{display:flex;align-items:center;gap:12px}
+.logo-mark{width:44px;height:44px;background:var(--accent);display:flex;align-items:center;justify-content:center;border-radius:6px;font-weight:800}
+.logo-text{font-weight:700;font-size:20px}
+.controls{display:flex;align-items:center;gap:10px}
+.search{background:#0b0b0d;padding:8px;border-radius:8px}
+.search input{background:transparent;border:0;color:#fff;outline:none;width:220px}
+.hamb{background:transparent;border:0;color:#fff;font-size:22px;cursor:pointer}
+
+/* drawer */
+.drawer{position:fixed;left:-320px;top:0;height:100vh;width:320px;background:#071018;padding:18px;box-shadow:6px 0 30px rgba(0,0,0,0.6);transition:left .25s;z-index:80}
+.drawer.open{left:0}
+.drawer .user{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.drawer .btn{background:var(--accent);border:0;color:#fff;padding:8px 12px;border-radius:6px;cursor:pointer}
+
+/* hero */
+.container{padding:18px}
+.hero{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:end;margin-bottom:22px}
+.hero-card{position:relative;border-radius:12px;overflow:hidden;min-height:320px;background:linear-gradient(90deg, rgba(0,0,0,0.2), rgba(0,0,0,0.6))}
+.hero-bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(0.45);transform:scale(1.02)}
+.hero-info{position:relative;padding:28px;z-index:2}
+.hero-title{font-size:28px;margin-bottom:8px}
+.hero-desc{color:var(--muted);max-height:86px;overflow:hidden}
+
+/* carousels */
+.section{margin-bottom:26px}
+.section h3{color:var(--accent);margin:0 0 8px 0}
+.row{display:flex;gap:12px;overflow-x:auto;padding-bottom:12px}
+.card{min-width:160px;flex:0 0 160px;background:var(--panel);border-radius:8px;overflow:hidden;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.6)}
+.poster{width:100%;height:220px;object-fit:cover;display:block}
+.card-body{padding:8px}
+.title{font-weight:700;font-size:14px}
+.meta{font-size:12px;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between;align-items:center}
+.pill{background:rgba(255,255,255,0.03);padding:6px 10px;border-radius:999px;font-size:13px;color:var(--muted)}
+
+/* hero slider dots */
+.slider-dots{display:flex;gap:8px;margin-top:10px}
+
+/* overlay for small preview (unused for full movie page) */
+.overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0.8);z-index:100}
+.overlay.open{display:flex}
+
+/* responsive */
+@media(max-width:920px){ .hero{grid-template-columns:1fr} .poster{height:160px} .card{min-width:140px} .search input{width:120px}}
+</style>
 </head>
 <body>
-<header class="site-header">
-  <div class="header-left">
-    <div class="logo"><span class="logo-mark">LX</span><span class="logo-text">LeoXtream</span></div>
+
+<header class="header">
+  <div class="brand">
+    <button class="hamb" id="hambBtn">☰</button>
+    <div class="logo-mark">LX</div>
+    <div class="logo-text">LeoXtream</div>
   </div>
-  <div class="header-right">
-    <input id="searchInput" placeholder="Search movies, categories..." />
+
+  <div class="controls">
+    <div class="search"><input id="search" placeholder="Search movies, categories..." /></div>
   </div>
 </header>
 
-<main id="main">
-  <section id="heroWrap"></section>
-  <div id="sections"></div>
-</main>
+<!-- Drawer -->
+<nav id="drawer" class="drawer" aria-hidden="true">
+  <div class="user">
+    <div style="width:56px;height:56px;border-radius:8px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;font-weight:700">U</div>
+    <div>
+      <div id="drawerName" style="font-weight:700">Guest</div>
+      <div style="font-size:13px;color:var(--muted)">Not logged in</div>
+    </div>
+  </div>
 
-<div id="overlay" class="overlay" aria-hidden="true">
-  <button id="closeOverlay" class="close-btn">✕</button>
-  <div id="detail" class="detail"></div>
+  <div style="margin:14px 0">
+    <button class="btn" id="loginBtn">Login</button>
+  </div>
+
+  <hr style="border-color:rgba(255,255,255,0.03)"/>
+
+  <ul style="list-style:none;padding:10px 0">
+    <li><a href="./" style="color:#fff;text-decoration:none">Home</a></li>
+    <li id="catList"></li>
+    <li><a href="#about" style="color:#fff;text-decoration:none">About</a></li>
+  </ul>
+
+  <div style="margin-top:20px;color:var(--muted);font-size:13px">
+    <strong>Features</strong>
+    <ul style="margin-top:8px;color:var(--muted)">
+      <li>Auto VJ tag detection</li>
+      <li>Hero slider (5 recent)</li>
+      <li>Simple login</li>
+    </ul>
+  </div>
+</nav>
+
+<div class="container">
+  <!-- hero -->
+  <div id="hero" class="hero" aria-hidden="true"></div>
+
+  <!-- sections -->
+  <div id="sections"></div>
 </div>
 
-<script src="script.js"></script>
+<!-- overlay (detail open fallback) -->
+<div id="overlay" class="overlay" aria-hidden="true"></div>
+
+<!-- Login Modal -->
+<div id="loginModal" class="overlay" aria-hidden="true" style="padding:10px">
+  <div style="width:420px;max-width:95%;background:#0f1115;padding:18px;border-radius:10px">
+    <h3 style="margin:0 0 12px 0;color:var(--accent)">Login / Register (simple)</h3>
+    <input id="userInput" placeholder="Username" style="width:100%;padding:10px;margin:8px 0;border-radius:6px;border:0;background:#0b0b0d;color:#fff" />
+    <input id="passInput" type="password" placeholder="Password" style="width:100%;padding:10px;margin:8px 0;border-radius:6px;border:0;background:#0b0b0d;color:#fff" />
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button id="doLogin" class="btn">Login</button>
+      <button id="doRegister" class="btn" style="background:#444">Register</button>
+      <button id="closeLogin" class="btn" style="background:transparent;border:1px solid rgba(255,255,255,0.06)">Close</button>
+    </div>
+    <div style="color:var(--muted);font-size:13px;margin-top:10px">Login info is stored locally in your browser for this demo.</div>
+  </div>
+</div>
+
 <script>
-  // configure where to load movies.json (raw GitHub URL of your admin repo)
-  window.LEO_CONFIG = {
-    MOVIES_JSON_RAW: "https://raw.githubusercontent.com/ashiraf256/Admin-Pannel/main/movies.json"
-  };
-  // initialize site
-  initLeoHome();
+/* CONFIG: change if your admin repo or branch differs */
+const MOVIES_JSON_RAW = 'https://raw.githubusercontent.com/ashiraf256/Admin-Pannel/main/movies.json';
+
+/* state */
+let movies = [];
+
+/* helpers */
+const $ = sel => document.querySelector(sel);
+const create = (t, k={}) => Object.assign(document.createElement(t), k);
+function esc(s){ return String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+function escAttr(s){ return esc(s).replaceAll('"','&quot;'); }
+
+/* drawer open */
+const drawer = $('#drawer'), hambBtn = $('#hambBtn');
+hambBtn.addEventListener('click', ()=> { drawer.classList.toggle('open'); drawer.setAttribute('aria-hidden', !drawer.classList.contains('open')); updateDrawerUser(); });
+
+/* login modal */
+const loginModal = $('#loginModal');
+$('#loginBtn').addEventListener('click', ()=> { loginModal.classList.add('open'); loginModal.setAttribute('aria-hidden','false'); });
+$('#closeLogin').addEventListener('click', ()=> { loginModal.classList.remove('open'); loginModal.setAttribute('aria-hidden','true'); });
+
+/* simple local auth */
+function currentUser(){ try{ return JSON.parse(localStorage.getItem('leo_user')||'null'); }catch(e){ return null; } }
+function saveUser(u){ localStorage.setItem('leo_user', JSON.stringify(u)); updateDrawerUser(); }
+function logout(){ localStorage.removeItem('leo_user'); updateDrawerUser(); }
+function updateDrawerUser(){
+  const u = currentUser();
+  $('#drawerName').textContent = u ? u.username : 'Guest';
+  $('#drawer .user div:nth-child(2) div:nth-child(2)').textContent = u ? 'Logged in' : 'Not logged in';
+  $('#loginBtn').textContent = u ? 'Logout' : 'Login';
+  if(u){ $('#loginBtn').onclick = ()=> { if(confirm('Logout?')) { logout(); } } } else { $('#loginBtn').onclick = ()=> { loginModal.classList.add('open'); loginModal.setAttribute('aria-hidden','false'); } }
+}
+$('#doRegister').addEventListener('click', ()=> {
+  const username = $('#userInput').value.trim(); const pass = $('#passInput').value;
+  if(!username || !pass) return alert('Enter username and password');
+  saveUser({ username, pass });
+  alert('Registered & logged in as ' + username);
+  loginModal.classList.remove('open'); loginModal.setAttribute('aria-hidden','true');
+});
+$('#doLogin').addEventListener('click', ()=> {
+  const username = $('#userInput').value.trim(); const pass = $('#passInput').value;
+  const u = currentUser();
+  if(u && u.username === username && u.pass === pass){ alert('Welcome back ' + username); loginModal.classList.remove('open'); loginModal.setAttribute('aria-hidden','true'); updateDrawerUser(); return; }
+  // if no user saved, allow login only if matches saved - simple behavior:
+  if(!u) return alert('No user registered. Use Register first.');
+  alert('Invalid credentials');
+});
+
+/* load movies.json */
+async function loadMovies(){
+  try{
+    const r = await fetch(MOVIES_JSON_RAW + '?_=' + Date.now());
+    if(!r.ok) throw new Error('Failed to load JSON: ' + r.status);
+    const j = await r.json();
+    movies = Array.isArray(j) ? j : (j && Array.isArray(j.movies) ? j.movies : []);
+    // ensure id and normalize category/type/vj
+    movies.forEach((m,i)=>{ if(m.id===undefined) m.id = 'm'+i; if(!m.category) m.category = (m.vj ? 'VJ' : (m.type || 'Movie')); });
+    renderEverything();
+  }catch(e){
+    document.querySelector('.container').innerHTML = '<div style="padding:24px;color:#f66">Failed to load movies.json — check admin repo raw URL. ' + e.message + '</div>';
+    console.error(e);
+  }
+}
+
+/* render hero 5 recent */
+function pickRecent(list, n=5){
+  const byDate = list.slice().filter(x=>x.createdAt).sort((a,b)=> new Date(b.createdAt) - new Date(a.createdAt));
+  const recent = byDate.length ? byDate.slice(0,n) : list.slice(0,n);
+  return recent;
+}
+let heroIndex = 0;
+let heroTimer = null;
+
+function renderHero(){
+  const heroWrap = document.getElementById('hero');
+  const recents = pickRecent(movies,5);
+  if(!recents.length){ heroWrap.innerHTML = ''; return; }
+  heroWrap.innerHTML = `
+    <div class="hero-card">
+      <div class="hero-bg" id="heroBg" style="background-image:url('${escAttr(recents[0].poster||'')}')"></div>
+      <div class="hero-info">
+        <div class="hero-title" id="heroTitle">${esc(recents[0].title)}</div>
+        <div class="hero-desc" id="heroDesc">${esc((recents[0].overview||'').slice(0,240))}</div>
+        <div style="margin-top:12px">
+          <a class="pill" href="movie.html?id=${encodeURIComponent(recents[0].id)}">Watch</a>
+          ${recents[0].trailer ? `<a class="pill" href="${escAttr(recents[0].trailer)}" target="_blank">Trailer</a>` : ''}
+        </div>
+        <div class="slider-dots" id="heroDots" style="margin-top:12px"></div>
+      </div>
+    </div>
+    <div class="hero-side">
+      <div style="font-weight:700">Featured</div>
+      <div style="margin-top:8px;color:var(--muted)" id="heroCat">${esc(recents[0].category||'')}</div>
+      <div style="margin-top:12px" class="meta-row">
+        <div class="pill" id="heroType">${esc(recents[0].type||'Movie')}</div>
+        <div class="pill" id="heroYear">${recents[0].createdAt ? new Date(recents[0].createdAt).getFullYear() : ''}</div>
+      </div>
+    </div>
+  `;
+  const dots = document.getElementById('heroDots');
+  dots.innerHTML = recents.map((r,idx)=>`<button data-idx="${idx}" style="background:${idx===0?varAccent(): 'transparent'};border:1px solid rgba(255,255,255,0.06);width:12px;height:12px;border-radius:50%"></button>`).join('');
+  dots.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=> { heroIndex = parseInt(b.dataset.idx); showHeroAt(recents, heroIndex); }));
+  startHeroTimer(recents);
+}
+function varAccent(){ return 'linear-gradient(90deg,var(--accent),#ff6b6b)'; }
+function showHeroAt(list, idx){
+  const item = list[idx];
+  if(!item) return;
+  $('#heroBg').style.backgroundImage = `url('${escAttr(item.poster||'')}')`;
+  $('#heroTitle').textContent = item.title;
+  $('#heroDesc').textContent = (item.overview||'').slice(0,240);
+  $('#heroCat').textContent = item.category || '';
+  $('#heroType').textContent = item.type || 'Movie';
+  $('#heroYear').textContent = item.createdAt ? new Date(item.createdAt).getFullYear() : '';
+  // update dots style
+  document.querySelectorAll('#heroDots button').forEach((b,i)=> b.style.background = i===idx ? 'white' : 'transparent');
+}
+function startHeroTimer(list){
+  if(heroTimer) clearInterval(heroTimer);
+  heroTimer = setInterval(()=> {
+    heroIndex = (heroIndex + 1) % list.length;
+    showHeroAt(list, heroIndex);
+  }, 4000);
+}
+
+/* render sections & category list */
+function renderSections(){
+  const sectionsEl = document.getElementById('sections');
+  sectionsEl.innerHTML = '';
+  // group by category
+  const map = {};
+  movies.forEach(m=>{ const c = m.category || 'Unsorted'; if(!map[c]) map[c]=[]; map[c].push(m); });
+  // preferred order: VJ, Series, Latest, then others
+  const keys = Object.keys(map);
+  const order = [];
+  if(map['VJ']) order.push('VJ');
+  if(map['Series']) order.push('Series');
+  order.push('Latest');
+  keys.forEach(k=>{ if(!order.includes(k)) order.push(k); });
+
+  // fill drawer categories
+  const catList = $('#catList'); catList.innerHTML = '<div style="padding:8px 0;font-weight:700">Categories</div>';
+  keys.forEach(k => { catList.innerHTML += `<div style="padding:6px 0"><a href="#" data-cat="${escAttr(k)}" class="catLink" style="color:#fff;text-decoration:none">${esc(k)}</a></div>`; });
+  document.querySelectorAll('.catLink').forEach(a=> a.addEventListener('click', (ev)=>{ ev.preventDefault(); filterByCategory(a.dataset.cat); drawer.classList.remove('open'); }));
+
+  order.forEach(cat=>{
+    let items = cat === 'Latest' ? movies.slice().sort((a,b)=> new Date(b.createdAt||0)-new Date(a.createdAt||0)).slice(0,12) : (map[cat]||[]);
+    if(!items || !items.length) return;
+    const sec = create('section'); sec.className = 'section';
+    sec.innerHTML = `<h3>${esc(cat)}</h3><div class="row"></div>`;
+    sectionsEl.appendChild(sec);
+    const row = sec.querySelector('.row');
+    items.forEach(m=>{
+      const card = create('div'); card.className='card';
+      card.innerHTML = `<img class="poster" src="${escAttr(m.poster||'')}" alt="${esc(m.title)}" /><div class="card-body"><div class="title">${esc(m.title)}</div><div class="meta"><div class="small">${esc(m.type||'')}</div><div><a class="pill" href="movie.html?id=${encodeURIComponent(m.id)}">Play</a></div></div></div>`;
+      card.addEventListener('click', ()=> { location.href = 'movie.html?id=' + encodeURIComponent(m.id); });
+      row.appendChild(card);
+    });
+  });
+}
+
+/* filter by category */
+function filterByCategory(cat){
+  if(cat === 'Latest'){ renderSections(); return; }
+  const filtered = movies.filter(m=>m.category === cat);
+  // render only that section
+  const sectionsEl = document.getElementById('sections');
+  sectionsEl.innerHTML = `<section class="section"><h3>${esc(cat)}</h3><div class="row">${filtered.map(m=>`<div class="card" onclick="location='movie.html?id=${encodeURIComponent(m.id)}'"><img class="poster" src="${escAttr(m.poster||'')}" /><div class="card-body"><div class="title">${esc(m.title)}</div></div></div>`).join('')}</div></section>`;
+}
+
+/* main render */
+function renderEverything(){
+  renderHero();
+  renderSections();
+}
+
+/* load */
+loadMovies();
+
+/* search input */
+$('#search').addEventListener('input', (e)=> {
+  const q = e.target.value.trim().toLowerCase();
+  if(!q) { renderEverything(); return; }
+  const filtered = movies.filter(m => ((m.title||'') + ' ' + (m.overview||'') + ' ' + (m.category||'')).toLowerCase().includes(q));
+  movies = movies; // keep global
+  // render filtered sections (quick approach)
+  const sectionsEl = document.getElementById('sections'); sectionsEl.innerHTML = `<section><h3>Search results</h3><div class="row">${filtered.map(m=>`<div class="card" onclick="location='movie.html?id=${encodeURIComponent(m.id)}'"><img class="poster" src="${escAttr(m.poster||'')}" /><div class="card-body"><div class="title">${esc(m.title)}</div></div></div>`).join('')}</div></section>`;
+});
+
+/* small helpers exported for template usage by inner HTML strings */
+function create(t){ return document.createElement(t); }
+
 </script>
+</body>
+</html></script>
 </body>
 </html>
