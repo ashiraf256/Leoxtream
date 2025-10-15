@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>LeoXtream — Movie</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="site-header">
+  <div class="header-left">
+    <div class="logo"><span class="logo-mark">LX</span><span class="logo-text">LeoXtream</span></div>
+  </div>
+  <div class="header-right">
+    <a href="./" class="back-link">Home</a>
+  </div>
+</header>
+
+<main id="pageMain" style="padding:18px"></main>
+
+<script src="script.js"></script>
+<script>
+  window.LEO_CONFIG = {
+    MOVIES_JSON_RAW: "https://raw.githubusercontent.com/ashiraf256/Admin-Pannel/main/movies.json"
+  };
+  initLeoMoviePage();
+</script>
+</body>
+</html>
